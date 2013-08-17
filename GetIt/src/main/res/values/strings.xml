@@ -4,5 +4,6 @@
     <string name="app_name">Get It</string>
     <string name="dummy_button">Where am I?</string>
     <string name="dummy_content"></string>
+    <string name="action_clear">Clear Cache</string>
 
 </resources>
