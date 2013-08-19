@@ -4,13 +4,13 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.TextView;
 
 import org.apache.http.HttpEntity;
@@ -28,14 +28,21 @@ import java.io.InputStreamReader;
 import java.util.List;
 
 
-public class FullscreenActivity extends Activity {
+public class FullscreenActivity extends Activity implements LocationListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_fullscreen);
+        getAddress();
+    }
 
+    @Override
+    protected void onStop() {
+        LocationManager locationManager =  (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
+        locationManager.removeUpdates(this);
+        super.onStop();
     }
 
     @Override
@@ -65,18 +72,16 @@ public class FullscreenActivity extends Activity {
         editor.commit();
     }
 
-    public void onButtonClick(View v) {
-        if(v.getId() == R.id.dummy_button){
-            getZip();
-        }
+    private void getAddress() {
+        Location loc = getCurrentLocation();
+        setAddressFromLocation(loc);
     }
 
-    private void getZip() {
-        Location loc = getCurrentLocation();
+    private void setAddressFromLocation(Location loc) {
         double lat; double lon;
         if (loc == null) {
-            lat = 37.423;
-            lon = -122.086;
+            updateContentView(this.getString(R.string.searching));
+            return;
         } else {
             lat = loc.getLatitude();
             lon = loc.getLongitude();
@@ -112,17 +117,36 @@ public class FullscreenActivity extends Activity {
                             newestLocation = location;
                         }
                     }
-                    //locationManager.requestLocationUpdates(provider, 0, 0, this);
+                    locationManager.requestLocationUpdates(provider, 0, 0, this);
                 }
             }
         } else {
-//            LocationDialogFragment dialog = new LocationDialogFragment();
-//            dialog.show(getSupportFragmentManager(),
-//                    LocationDialogFragment.class.getName());
-            //newestLocation = locationManager.
+            updateContentView(this.getString(R.string.nolocationprovider));
         }
         return newestLocation;
 
+    }
+
+    // LocationListener methods
+
+    @Override
+    public void onLocationChanged(Location location) {
+        setAddressFromLocation(location);
+    }
+
+    @Override
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+        return;
+    }
+
+    @Override
+    public void onProviderEnabled(String s) {
+        return;
+    }
+
+    @Override
+    public void onProviderDisabled(String s) {
+        return;
     }
 
 
@@ -133,6 +157,7 @@ public class FullscreenActivity extends Activity {
             try {
                 String url= urls[0];
 
+                String result = "";
                 StringBuilder stringBuilder = new StringBuilder();
                 HttpClient httpClient = new DefaultHttpClient();
                 HttpGet httpGet = new HttpGet(url);
@@ -150,16 +175,13 @@ public class FullscreenActivity extends Activity {
                             stringBuilder.append(line);
                         }
                         inputStream.close();
-                    } else {
-                        stringBuilder.append("failed dload");
                     }
+                    JSONTokener tokener = new JSONTokener(stringBuilder.toString());
+                    JSONObject json = new JSONObject(tokener);
+                    result = json.getJSONArray("results").getJSONObject(0).getString("formatted_address");
                 } catch (Exception e) {
-                    stringBuilder.append(e.getLocalizedMessage());
+                    result = e.getLocalizedMessage();
                 }
-
-                JSONTokener tokener = new JSONTokener(stringBuilder.toString());
-                JSONObject json = new JSONObject(tokener);
-                String result = json.getJSONArray("results").getJSONObject(0).getString("formatted_address");
 
                 SharedPreferences prefs = getPreferences(Context.MODE_PRIVATE);
                 SharedPreferences.Editor editor = prefs.edit();
