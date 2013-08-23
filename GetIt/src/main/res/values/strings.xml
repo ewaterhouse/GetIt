@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">Where Am I?</string>
+    <string name="app_name">Get It</string>
     <string name="dummy_content"></string>
     <string name="action_clear">Clear Cache</string>
     <string name="nolocationprovider">No enabled way to find the location</string>

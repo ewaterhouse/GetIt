@@ -35,7 +35,7 @@ public class FullscreenActivity extends Activity implements LocationListener {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_fullscreen);
-        getAddress();
+
     }
 
     @Override
@@ -43,6 +43,12 @@ public class FullscreenActivity extends Activity implements LocationListener {
         LocationManager locationManager =  (LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
         locationManager.removeUpdates(this);
         super.onStop();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        getAddress();
     }
 
     @Override
@@ -178,7 +184,10 @@ public class FullscreenActivity extends Activity implements LocationListener {
                     }
                     JSONTokener tokener = new JSONTokener(stringBuilder.toString());
                     JSONObject json = new JSONObject(tokener);
-                    result = json.getJSONArray("results").getJSONObject(0).getString("formatted_address");
+                    result = json.getJSONArray("results").getJSONObject(0).getString("formatted_address").trim();
+                    if (result == "") {
+                        result = stringBuilder.toString(); //maybe warning msg instead?
+                    }
                 } catch (Exception e) {
                     result = e.getLocalizedMessage();
                 }
